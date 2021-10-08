@@ -20,23 +20,26 @@ public class Parser {
 		if (token.getTag() == tag) {
 			token = lexer.scan();
 		} else {
-			throw new SyntaxError();
+			throw new SyntaxError("Error in line " + lexer.line);
 		}
 	}
 
-	public void analyze() throws SyntaxError, IOException {
-		token = lexer.scan();
-		statementSequence();
-		if (token.getTag() == Tag.EOF) {
-			System.out.println("ACCEPTED");
-		} else {
-			throw new SyntaxError();
-		}
-	}
+    public void analyze() throws SyntaxError, IOException {
+      token = lexer.scan(); statementSequence();
+      if (token.getTag() == Tag.EOF) {
+        System.out.println("ACCEPTED");
+      } else {
+        throw new SyntaxError("Error in line " + lexer.line);
+      }
+    }
 
 	private void statementSequence() throws SyntaxError, IOException {
 		if (token.getTag() == Tag.VAR || token.getTag() == Tag.ID || token.getTag() == Tag.PRINT  ||
-		    token.getTag() == Tag.WHILE || token.getTag() == (int) '{' || token.getTag() == Tag.IF) {
+		    token.getTag() == Tag.WHILE || token.getTag() == (int) '{' || token.getTag() == Tag.IF ||
+				token.getTag() == Tag.FORWARD || token.getTag() == Tag.BACKWARD || token.getTag() == Tag.RIGHT
+				|| token.getTag() == Tag.LEFT || token.getTag() == Tag.HOME || token.getTag() == Tag.MOVE ||
+				token.getTag() == Tag.PENUP || token.getTag() == Tag.PENDOWN
+				) {
 		statement();
 		statementSequence();
 		} else {
@@ -55,11 +58,21 @@ public class Parser {
 			expression();
 			check((int) ';');
 		} else if (token.getTag() == Tag.PRINT) {
-			// TO DO
+			check(Tag.PRINT);
+			check((int) '(');
+			displayList();
+			check((int) ')');
+			check((int) ';');
 		} else if (token.getTag() == Tag.WHILE) {
-			// TO DO
+			check(Tag.WHILE);
+			check((int) '(');
+			eBool();
+			check((int) ')');
+			statement();
 		} else if (token.getTag() == (int) '{') {
-			// TO DO
+			check((int) '{');
+			statementSequence();
+			check((int) '}');
 		} else if (token.getTag() == Tag.IF) {
 			check(Tag.IF);
 			check((int) '(');
@@ -67,6 +80,37 @@ public class Parser {
 			check((int) ')');
 			statement();
 			restIf();
+		} else if (token.getTag() == Tag.PENUP) {
+			check(Tag.PENUP);
+			check((int) ';');
+		} else if (token.getTag() == Tag.PENDOWN) {
+			check(Tag.PENDOWN);
+			check((int) ';');
+		} else if (token.getTag() == Tag.HOME) {
+			check(Tag.HOME);
+			check((int) ';');
+		} else if (token.getTag() == Tag.FORWARD) {
+			check(Tag.FORWARD);
+			factor();
+			check((int) ';');
+		} else if (token.getTag() == Tag.BACKWARD) {
+			check(Tag.BACKWARD);
+			factor();
+			check((int) ';');
+		} else if (token.getTag() == Tag.RIGHT) {
+			check(Tag.RIGHT);
+			factor();
+			check((int) ';');
+		} else if (token.getTag() == Tag.LEFT) {
+			check(Tag.LEFT);
+			factor();
+			check((int) ';');
+		} else if (token.getTag() == Tag.MOVE) {
+			check(Tag.MOVE);
+			factor();
+			check((int) ',');
+			factor();
+			check((int) ';');
 		}
 	}
 
@@ -134,11 +178,45 @@ public class Parser {
 	}
 
 	private void eBool() throws SyntaxError, IOException {
-		// TO DO
+		if (token.getTag() == Tag.TRUE) {
+			check(Tag.TRUE);
+		} else if (token.getTag() == Tag.FALSE) {
+			check(Tag.FALSE);
+		} else {
+			expression();
+			switch (token.getTag()) {
+				case Tag.EQ:
+					check(Tag.EQ);
+					break;
+				case Tag.GEQ:
+					check(Tag.GEQ);
+					break;
+				case Tag.LEQ:
+					check(Tag.LEQ);
+					break;
+				case ((int)'>'):
+					check((int)'>');
+					break;
+				case ((int)'<'):
+					check((int)'<');
+					break;
+				default:
+					throw new SyntaxError();
+			}
+			expression();
+		}
 	}
 
 	private void displayList() throws SyntaxError, IOException {
-		// TO DO
+		if (   token.getTag() == Tag.ID
+				|| token.getTag() == Tag.NUMBER
+				|| token.getTag() == Tag.STRING
+		 ) {
+			element();
+			elementSequence();
+		 } else {
+			 // do nothing
+		 }
 	}
 
 	private void element() throws SyntaxError, IOException {
@@ -149,11 +227,17 @@ public class Parser {
 		} else if (token.getTag() == Tag.STRING) {
 			check(Tag.STRING);
 		} else {
-			throws new SyntaxError();
+			throw new SyntaxError();
 		}
 	}
 
 	private void elementSequence() throws SyntaxError, IOException {
-		// TO DO
+		if (token.getTag() == ((int)',')) {
+			check((int)',');
+			element();
+			elementSequence();
+		} else {
+			// do nothing;
+		}
 	}
 }
